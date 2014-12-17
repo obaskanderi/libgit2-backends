@@ -14,7 +14,7 @@ IF(NOT CMAKE_BUILD_TYPE)
 ENDIF()
 
 SET(SOURCES
-    sqlite.c)
+    odb.c)
 
 IF(BUILD_SHARED_LIBS)
     ADD_LIBRARY(git2-sqlite SHARED ${SOURCES})
