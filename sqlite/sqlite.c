@@ -55,7 +55,7 @@ int sqlite_backend__read_header(size_t *len_p, git_otype *type_p, git_odb_backen
 			*type_p = (git_otype)sqlite3_column_int(backend->st_read_header, 0);
 			*len_p = (size_t)sqlite3_column_int(backend->st_read_header, 1);
 			assert(sqlite3_step(backend->st_read_header) == SQLITE_DONE);
-            error = GIT_OK;
+			error = GIT_OK;
 		} else {
 			error = GIT_ENOTFOUND;
 		}
@@ -82,10 +82,10 @@ int sqlite_backend__read(void **data_p, size_t *len_p, git_otype *type_p, git_od
 			*data_p = malloc(*len_p);
 
 			if (*data_p == NULL) {
-                error = GIT_ERROR;
+				error = GIT_ERROR;
 			} else {
 				memcpy(*data_p, sqlite3_column_blob(backend->st_read, 2), *len_p);
-                error = GIT_OK;
+				error = GIT_OK;
 			}
 
 			assert(sqlite3_step(backend->st_read) == SQLITE_DONE);
@@ -98,16 +98,15 @@ int sqlite_backend__read(void **data_p, size_t *len_p, git_otype *type_p, git_od
 	return error;
 }
 
-int sqlite_backend__read_prefix(git_oid *out_oid, void **data_p, size_t *len_p, git_otype *type_p,
-                                git_odb_backend *_backend, const git_oid *short_oid, size_t len) {
+int sqlite_backend__read_prefix(git_oid *out_oid, void **data_p, size_t *len_p, git_otype *type_p, git_odb_backend *_backend, const git_oid *short_oid, size_t len) {
 	if (len >= GIT_OID_HEXSZ) {
 		/* Just match the full identifier */
 		int error = sqlite_backend__read(data_p, len_p, type_p, _backend, short_oid);
-        if (error == GIT_OK)
+		if (error == GIT_OK)
 			git_oid_cpy(out_oid, short_oid);
 		return error;
-    }
-    return GIT_ERROR;
+	}
+	return GIT_ERROR;
 }
 
 int sqlite_backend__exists(git_odb_backend *_backend, const git_oid *oid)
@@ -141,7 +140,7 @@ int sqlite_backend__write(git_odb_backend *_backend, const git_oid *id, const vo
 
 	backend = (sqlite_backend *)_backend;
 
-    if ((error = git_odb_hash((git_oid*)(id), data, len, type)) < 0)
+	if ((error = git_odb_hash((git_oid*)(id), data, len, type)) < 0)
 		return error;
 
 	error = SQLITE_ERROR;
@@ -154,7 +153,7 @@ int sqlite_backend__write(git_odb_backend *_backend, const git_oid *id, const vo
 	}
 
 	sqlite3_reset(backend->st_write);
-    return (error == SQLITE_DONE) ? GIT_OK : GIT_ERROR;
+	return (error == SQLITE_DONE) ? GIT_OK : GIT_ERROR;
 }
 
 
@@ -184,7 +183,7 @@ static int create_table(sqlite3 *db)
 	if (sqlite3_exec(db, sql_creat, NULL, NULL, NULL) != SQLITE_OK)
 		return GIT_ERROR;
 
-    return GIT_OK;
+	return GIT_OK;
 }
 
 static int init_db(sqlite3 *db)
@@ -206,7 +205,7 @@ static int init_db(sqlite3 *db)
 
 	case SQLITE_ROW:
 		/* the table was found */
-        error = GIT_OK;
+		error = GIT_OK;
 		break;
 
 	default:
@@ -238,7 +237,7 @@ static int init_statements(sqlite_backend *backend)
 	if (sqlite3_prepare_v2(backend->db, sql_write, -1, &backend->st_write, NULL) != SQLITE_OK)
 		return GIT_ERROR;
 
-    return GIT_OK;
+	return GIT_OK;
 }
 
 int git_odb_backend_sqlite(git_odb_backend **backend_out, const char *sqlite_db)
@@ -248,7 +247,7 @@ int git_odb_backend_sqlite(git_odb_backend **backend_out, const char *sqlite_db)
 
 	backend = calloc(1, sizeof(sqlite_backend));
 	if (backend == NULL)
-        return GIT_ERROR;
+		return GIT_ERROR;
 
 	if (sqlite3_open(sqlite_db, &backend->db) != SQLITE_OK)
 		goto cleanup;
@@ -269,7 +268,7 @@ int git_odb_backend_sqlite(git_odb_backend **backend_out, const char *sqlite_db)
 	backend->parent.free = &sqlite_backend__free;
 
 	*backend_out = (git_odb_backend *)backend;
-    return GIT_OK;
+	return GIT_OK;
 
 cleanup:
 	sqlite_backend__free((git_odb_backend *)backend);
