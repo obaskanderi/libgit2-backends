@@ -60,7 +60,7 @@ static int sqlite_refdb_backend__lookup(git_reference **out, git_refdb_backend *
 
     if (sqlite3_bind_text(backend->st_read, 1, ref_name, strlen(ref_name), SQLITE_TRANSIENT) == SQLITE_OK) {
         if (sqlite3_step(backend->st_read) == SQLITE_ROW) {
-            char *raw_ref = (char *) sqlite3_column_text(backend->st_read, 1);
+            char *raw_ref = (char *) sqlite3_column_text(backend->st_read, 0);
 
             int size = strlen(raw_ref) - 1;
             char oid_str[size];
