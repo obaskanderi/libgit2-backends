@@ -57,7 +57,7 @@ static int sqlite_refdb_backend__lookup(git_reference **out, git_refdb_backend *
 
     if (sqlite3_bind_text(backend->st_read, 1, ref_name, strlen(ref_name), SQLITE_TRANSIENT) == SQLITE_OK) {
         if (sqlite3_step(backend->st_read) == SQLITE_ROW) {
-            std::string raw_ref = (const char*) sqlite3_column_text(backend->st_read, 1);
+            std::string raw_ref = std::string(reinterpret_cast<const char*>(sqlite3_column_text(backend->st_read, 0)));
             if (raw_ref[0] == GIT_TYPE_REF_OID) {
                 git_oid oid;
                 git_oid_fromstr(&oid, raw_ref.substr(2).c_str());
@@ -70,8 +70,8 @@ static int sqlite_refdb_backend__lookup(git_reference **out, git_refdb_backend *
             }
             assert(sqlite3_step(backend->st_read) == SQLITE_DONE);
         } else {
-            giterr_set_str(GITERR_REFERENCE, "sqlite refdb storage corrupted (unknown ref type returned)");
-            error = GIT_ERROR;
+            giterr_set_str(GITERR_REFERENCE, "sqlite refdb failed to find reference for name");
+            error = GIT_ENOTFOUND;
         }
     } else {
         giterr_set_str(GITERR_REFERENCE, "sqlite refdb storage corrupted (unknown ref type returned)");
@@ -146,7 +146,7 @@ int sqlite_refdb_backend__iterator(git_reference_iterator **_iter, struct git_re
     do {
         result = sqlite3_step(stmt_read);
         if (result == SQLITE_ROW) {
-            std::string key = (const char*) sqlite3_column_text(stmt_read, 0);
+            std::string key = std::string(reinterpret_cast<const char*>(sqlite3_column_text(stmt_read, 0)));
             keys.emplace_back(key);
         }
     } while (result == SQLITE_ROW) ;
