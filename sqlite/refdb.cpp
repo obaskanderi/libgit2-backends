@@ -186,6 +186,7 @@ static int sqlite_refdb_backend__write(
 
     int result = sqlite3_bind_text(backend->st_write, 1, name, strlen(name), SQLITE_TRANSIENT);
     if (result == SQLITE_OK) {
+        target = git_reference_target(ref);
         std::string write_value;
         if (target) {
             git_oid_nfmt(oid_str, sizeof(oid_str), target);
@@ -193,7 +194,7 @@ static int sqlite_refdb_backend__write(
             write_value.append(":");
             write_value.append(oid_str);
         } else {
-            const char *symbolic_target = git_reference_symbolic_target(ref);
+            std::string symbolic_target = std::string(reinterpret_cast<const char*>(git_reference_symbolic_target(ref)));
             write_value.append(1, GIT_TYPE_REF_SYMBOLIC);
             write_value.append(":");
             write_value.append(symbolic_target);
