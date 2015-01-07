@@ -99,10 +99,8 @@ static int sqlite_odb_backend__read_prefix(
         /* Just match the full identifier */
         int error = sqlite_odb_backend__read(data_p, len_p, type_p, _backend, short_oid);
         if (error == GIT_OK) {
-            std::cout << __PRETTY_FUNCTION__ <<  " GIT_OK" << std::endl;
             git_oid_cpy(out_oid, short_oid);
         }
-        std::cout << __PRETTY_FUNCTION__ <<  " GIT_UNKNOWN_ERROR" << std::endl;
         return error;
     }
 
