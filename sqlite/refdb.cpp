@@ -103,9 +103,8 @@ static int sqlite_refdb_backend__iterator_next(git_reference **ref, git_referenc
         ref_name = iter->keys.at(iter->current++).c_str();
         error = sqlite_refdb_backend__lookup(ref, (git_refdb_backend *)iter->backend, ref_name);
         return error;
-    } else {
-        return GIT_ITEROVER;
     }
+    return GIT_ITEROVER;
 }
 
 static int sqlite_refdb_backend__iterator_next_name(const char **ref_name, git_reference_iterator *_iter)
@@ -118,9 +117,8 @@ static int sqlite_refdb_backend__iterator_next_name(const char **ref_name, git_r
     if(iter->current < iter->keys.size()) {
         *ref_name = strdup(iter->keys.at(iter->current++).c_str());
         return GIT_OK;
-    } else {
-        return GIT_ITEROVER;
     }
+    return GIT_ITEROVER;
 }
 
 int sqlite_refdb_backend__iterator(git_reference_iterator **_iter, struct git_refdb_backend *_backend, const char *glob)
@@ -209,10 +207,9 @@ static int sqlite_refdb_backend__write(
     sqlite3_reset(backend->st_write);
     if (result == SQLITE_DONE) {
         return GIT_OK;
-    } else {
-        giterr_set_str(GITERR_ODB, "Error writing reference to Sqlite RefDB backend");
-        return GIT_ERROR;
     }
+    giterr_set_str(GITERR_ODB, "Error writing reference to Sqlite RefDB backend");
+    return GIT_ERROR;
 }
 
 int sqlite_refdb_backend__rename(git_reference **out, git_refdb_backend *_backend, const char *old_name,
@@ -265,10 +262,10 @@ int sqlite_refdb_backend__del(git_refdb_backend *_backend, const char *ref_name,
     sqlite3_reset(backend->st_delete);
     if (error == SQLITE_DONE) {
       return GIT_OK;
-    } else {
-      giterr_set_str(GITERR_ODB, "Error deleting reference from Sqlite RefDB backend");
-      return GIT_ERROR;
     }
+
+    giterr_set_str(GITERR_ODB, "Error deleting reference from Sqlite RefDB backend");
+    return GIT_ERROR;
 }
 
 static void sqlite_refdb_backend__free(git_refdb_backend *_backend)
@@ -372,7 +369,7 @@ static int init_statements(sqlite_refdb_backend *backend)
         "SELECT refname FROM " + GIT2_REFDB_TABLE_NAME +";";
 
     static const std::string sql_write =
-        "INSERT OR IGNORE INTO " + GIT2_REFDB_TABLE_NAME +" VALUES (?, ?);";
+        "INSERT OR REPLACE INTO " + GIT2_REFDB_TABLE_NAME +" VALUES (?, ?);";
 
     static const std::string sql_delete =
         "DELETE FROM " + GIT2_REFDB_TABLE_NAME + " WHERE refname = ?;";
