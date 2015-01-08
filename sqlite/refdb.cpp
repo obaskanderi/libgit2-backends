@@ -1,4 +1,4 @@
-#include "sqlite.hpp"
+#include "lg2sql.hpp"
 
 #include <assert.h>
 #include <git2/sys/refdb_backend.h>

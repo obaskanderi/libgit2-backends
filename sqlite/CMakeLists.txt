@@ -20,7 +20,7 @@ SET(SOURCES
     refdb.cpp)
 
 SET(HEADERS
-    sqlite.hpp)
+    lg2sql.hpp)
 
 IF(BUILD_SHARED_LIBS)
     ADD_LIBRARY(lg2sql SHARED ${SOURCES})

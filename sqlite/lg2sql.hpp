@@ -1,5 +1,5 @@
-#ifndef LIBGIT2_BACKENDS_SQLITE_HPP
-#define LIBGIT2_BACKENDS_SQLITE_HPP
+#ifndef LG2SQL_HPP
+#define LG2SQL_HPP
 
 #include <git2.h>
 
