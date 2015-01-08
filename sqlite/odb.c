@@ -45,13 +45,16 @@ int sqlite_odb_backend__read_header(size_t *len_p, git_otype *type_p, git_odb_ba
 {
 	sqlite_odb_backend *backend;
 	int error;
+	char *str_id = (char *)calloc(GIT_OID_HEXSZ + 1, sizeof(char));
 
 	assert(len_p && type_p && _backend && oid);
 
 	backend = (sqlite_odb_backend *)_backend;
 	error = GIT_ERROR;
 
-	if (sqlite3_bind_text(backend->st_read_header, 1, (char *)oid->id, 20, SQLITE_TRANSIENT) == SQLITE_OK) {
+	git_oid_tostr(str_id, GIT_OID_HEXSZ, oid);
+
+	if (sqlite3_bind_text(backend->st_read_header, 1, str_id, strlen(str_id), SQLITE_TRANSIENT) == SQLITE_OK) {
 		if (sqlite3_step(backend->st_read_header) == SQLITE_ROW) {
 			*type_p = (git_otype)sqlite3_column_int(backend->st_read_header, 0);
 			*len_p = (size_t)sqlite3_column_int(backend->st_read_header, 1);
@@ -63,6 +66,7 @@ int sqlite_odb_backend__read_header(size_t *len_p, git_otype *type_p, git_odb_ba
 	}
 
 	sqlite3_reset(backend->st_read_header);
+	free(str_id);
 	return error;
 }
 
@@ -70,20 +74,23 @@ int sqlite_odb_backend__read(void **data_p, size_t *len_p, git_otype *type_p, gi
 {
 	sqlite_odb_backend *backend;
 	int error;
+	char *str_id = (char *)calloc(GIT_OID_HEXSZ + 1, sizeof(char));
 
 	assert(data_p && len_p && type_p && _backend && oid);
 
 	backend = (sqlite_odb_backend *)_backend;
 	error = GIT_ERROR;
 
-	if (sqlite3_bind_text(backend->st_read, 1, (char *)oid->id, 20, SQLITE_TRANSIENT) == SQLITE_OK) {
+	git_oid_tostr(str_id, GIT_OID_HEXSZ, oid);
+
+	if (sqlite3_bind_text(backend->st_read, 1,  str_id, strlen(str_id), SQLITE_TRANSIENT) == SQLITE_OK) {
 		if (sqlite3_step(backend->st_read) == SQLITE_ROW) {
 			*type_p = (git_otype)sqlite3_column_int(backend->st_read, 0);
 			*len_p = (size_t)sqlite3_column_int(backend->st_read, 1);
 			*data_p = malloc(*len_p);
 
 			if (*data_p == NULL) {
-				error = GIT_ERROR;
+				error = GITERR_NOMEMORY;
 			} else {
 				memcpy(*data_p, sqlite3_column_blob(backend->st_read, 2), *len_p);
 				error = GIT_OK;
@@ -96,6 +103,7 @@ int sqlite_odb_backend__read(void **data_p, size_t *len_p, git_otype *type_p, gi
 	}
 
 	sqlite3_reset(backend->st_read);
+	free(str_id);
 	return error;
 }
 
@@ -103,10 +111,12 @@ int sqlite_odb_backend__read_prefix(git_oid *out_oid, void **data_p, size_t *len
 	if (len >= GIT_OID_HEXSZ) {
 		/* Just match the full identifier */
 		int error = sqlite_odb_backend__read(data_p, len_p, type_p, _backend, short_oid);
-		if (error == GIT_OK)
+		if (error == GIT_OK) {
 			git_oid_cpy(out_oid, short_oid);
+		}
 		return error;
 	}
+	giterr_set_str(GITERR_ODB, "Sqlite odb doesn't not implement oid prefix lookup");
 	return GIT_ERROR;
 }
 
@@ -114,13 +124,16 @@ int sqlite_odb_backend__exists(git_odb_backend *_backend, const git_oid *oid)
 {
 	sqlite_odb_backend *backend;
 	int found;
+	char *str_id = (char *)calloc(GIT_OID_HEXSZ + 1, sizeof(char));
 
 	assert(_backend && oid);
 
 	backend = (sqlite_odb_backend *)_backend;
 	found = 0;
 
-	if (sqlite3_bind_text(backend->st_read_header, 1, (char *)oid->id, 20, SQLITE_TRANSIENT) == SQLITE_OK) {
+	git_oid_tostr(str_id, GIT_OID_HEXSZ, oid);
+
+	if (sqlite3_bind_text(backend->st_read_header, 1, str_id, strlen(str_id), SQLITE_TRANSIENT) == SQLITE_OK) {
 		if (sqlite3_step(backend->st_read_header) == SQLITE_ROW) {
 			found = 1;
 			assert(sqlite3_step(backend->st_read_header) == SQLITE_DONE);
@@ -128,33 +141,40 @@ int sqlite_odb_backend__exists(git_odb_backend *_backend, const git_oid *oid)
 	}
 
 	sqlite3_reset(backend->st_read_header);
+	free(str_id);
 	return found;
 }
 
 
-int sqlite_odb_backend__write(git_odb_backend *_backend, const git_oid *id, const void *data, size_t len, git_otype type)
+int sqlite_odb_backend__write(git_odb_backend *_backend, const git_oid *oid, const void *data, size_t len, git_otype type)
 {
 	int error;
 	sqlite_odb_backend *backend;
+	char *str_id = (char *)calloc(GIT_OID_HEXSZ + 1, sizeof(char));
 
 	assert(id && _backend && data);
 
 	backend = (sqlite_odb_backend *)_backend;
-
-	if ((error = git_odb_hash((git_oid*)(id), data, len, type)) < 0)
-		return error;
-
 	error = SQLITE_ERROR;
 
-	if (sqlite3_bind_text(backend->st_write, 1, (char *)id->id, 20, SQLITE_TRANSIENT) == SQLITE_OK &&
+	git_oid_tostr(str_id, GIT_OID_HEXSZ, oid);
+
+	if (sqlite3_bind_text(backend->st_write, 1, str_id, strlen(str_id), SQLITE_TRANSIENT) == SQLITE_OK &&
 		sqlite3_bind_int(backend->st_write, 2, (int)type) == SQLITE_OK &&
 		sqlite3_bind_int(backend->st_write, 3, len) == SQLITE_OK &&
 		sqlite3_bind_blob(backend->st_write, 4, data, len, SQLITE_TRANSIENT) == SQLITE_OK) {
 		error = sqlite3_step(backend->st_write);
 	}
 
+	free(str_id);
+
 	sqlite3_reset(backend->st_write);
-	return (error == SQLITE_DONE) ? GIT_OK : GIT_ERROR;
+	if (error == SQLITE_DONE) {
+		return GIT_OK;
+	}
+
+	giterr_set_str(GITERR_ODB, "Error writing object to Sqlite ODB backend");
+	return GIT_ERROR;
 }
 
 
