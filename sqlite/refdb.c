@@ -1,3 +1,5 @@
+#include "lg2sql.hpp"
+
 #include <assert.h>
 #include <git2.h>
 #include <git2/errors.h>
@@ -14,7 +16,6 @@ static const char* GIT_TYPE_REF_SYMBOLIC = "2";
 
 typedef struct sqlite_refdb_backend {
     git_refdb_backend parent;
-    git_repository *repo;
     sqlite3 *db;
     sqlite3_stmt *st_read;
     sqlite3_stmt *st_read_all;
@@ -441,7 +442,6 @@ static int init_statements(sqlite_refdb_backend *backend)
 
 int git_refdb_backend_sqlite(
   git_refdb_backend **backend_out,
-  git_repository *repository,
   const char *sqlite_db)
 {
     sqlite_refdb_backend *backend;
@@ -450,8 +450,6 @@ int git_refdb_backend_sqlite(
     if (backend == NULL) {
         return -1;
     }
-
-    backend->repo = repository;
 
     if (sqlite3_open(sqlite_db, &backend->db) != SQLITE_OK) {
         goto fail;
