@@ -114,9 +114,8 @@ static int sqlite_refdb_backend__iterator_next(git_reference **ref, git_referenc
         ref_name = iter->keys[iter->current++];
         error = sqlite_refdb_backend__lookup(ref, (git_refdb_backend *)iter->backend, ref_name);
         return error;
-    } else {
-        return GIT_ITEROVER;
     }
+    return GIT_ITEROVER;
 }
 
 static int sqlite_refdb_backend__iterator_next_name(const char **ref_name, git_reference_iterator *_iter)
@@ -129,9 +128,8 @@ static int sqlite_refdb_backend__iterator_next_name(const char **ref_name, git_r
     if(iter->current < iter->size) {
         *ref_name = strdup(iter->keys[iter->current++]);
         return GIT_OK;
-    } else {
-        return GIT_ITEROVER;
     }
+    return GIT_ITEROVER;
 }
 
 int sqlite_refdb_backend__iterator(git_reference_iterator **_iter, struct git_refdb_backend *_backend, const char *glob)
@@ -305,10 +303,10 @@ int sqlite_refdb_backend__del(git_refdb_backend *_backend, const char *ref_name,
     sqlite3_reset(backend->st_delete);
     if (error == SQLITE_DONE) {
       return GIT_OK;
-    } else {
-      giterr_set_str(GITERR_ODB, "Error deleting reference from Sqlite RefDB backend");
-      return GIT_ERROR;
     }
+
+    giterr_set_str(GITERR_ODB, "Error deleting reference from Sqlite RefDB backend");
+    return GIT_ERROR;
 }
 
 static void sqlite_refdb_backend__free(git_refdb_backend *_backend)
