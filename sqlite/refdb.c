@@ -412,7 +412,7 @@ static int init_statements(sqlite_refdb_backend *backend)
         "SELECT refname FROM '" GIT2_REFDB_TABLE_NAME "';";
 
     static const char *sql_write =
-        "INSERT OR IGNORE INTO '" GIT2_REFDB_TABLE_NAME "' VALUES (?, ?);";
+        "INSERT OR REPLACE INTO '" GIT2_REFDB_TABLE_NAME "' VALUES (?, ?);";
 
     static const char *sql_delete =
         "DELETE FROM '" GIT2_REFDB_TABLE_NAME "' WHERE refname = ?;";
